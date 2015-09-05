@@ -104,10 +104,16 @@ class SampleChecker(Server):
     def recv_all(self, sock):
         data = ''
         while True:
-            data += sock.recv(8192)
+            target_data = sock.recv(8192)
+            if target_data == '':
+                break
+            data += target_data
             if self.END_MARKER in data:
                 self.logger.debug("Received message: %s", data)
-                return data
+                break
+        if data == "":
+            raise socket.timeout
+        return data
 
     def send_all(self, sock, mes):
         sock.send(mes)
@@ -144,12 +150,12 @@ class SampleChecker(Server):
     def __push(self, endpoint, flag_id, flag):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         #to prevent checker blocking on recv or send
-        s.settimeout(5.0)
+        s.settimeout(3)
         s.connect((endpoint, self.PORT))
-
         greeting = self.recv_all(s)
         if not self.check_reply(greeting, reply=self.REPL_220):
                 return Result.MUMBLE, flag_id
+
 
         self.send_all(s, "USER anonymous")
         reply = self.recv_all(s)
@@ -304,6 +310,7 @@ class SampleChecker(Server):
         if not self.check_reply(greeting, reply=self.REPL_220):
                 return Result.MUMBLE
 
+
         self.send_all(s, "USER anonymous")
         reply = self.recv_all(s)
         if not self.check_reply(reply, reply=self.REPL_331_ANON):
@@ -371,4 +378,8 @@ class SampleChecker(Server):
 
 
 checker = SampleChecker()
+"""for x in xrange(1):
+    result, flag_id = checker.push("10.1.10.132", "flag_id", "flag")
+    print "Push return is", result, " data: ", flag_id + "\n"
+    print "Pulling return is: ", checker.pull("10.1.10.132", "f", "flsag")"""
 checker.run()
