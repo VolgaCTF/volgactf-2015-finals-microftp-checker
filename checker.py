@@ -7,6 +7,7 @@ import time
 import hashlib
 import base64
 import binascii
+import os
 
 
 class CryptoHelper():
@@ -90,8 +91,14 @@ class CryptoError(Exception):
 
 
 class SampleChecker(Server):
+    SOCKET_TIMEOUT = "SOCKET_TIMEOUT"
+    SOCKET_BIND_RANGE_START = "SOCKET_BIND_RANGE_START"
+    SOCKET_BIND_RANGE_END = "SOCKET_BIND_RANGE_END"
+
+
     PORT = 21
-    port_range = [5000, 6000]
+    default_port_range = [5000, 6000]
+    default_timeout = 5
     REPL_220 = "220 Service ready for new user.\r\n"
     REPL_331_ANON = "331 Anonymous login okay, send your complete email as your password.\r\n"
     REPL_230 = "230 User logged in, proceed.\r\n"
@@ -100,6 +107,12 @@ class SampleChecker(Server):
     REPL_221 = "221 Service closing control connection.\r\n"
     REPL_530_NON_ADMIN = "530 This action is allowed only for admin users.\r\n"
     END_MARKER = "\r\n"
+
+    def __init__(self):
+        Server.__init__(self)
+        self.timeout = os.getenv("SOCKET_TIMEOUT", self.default_timeout)
+        self.port_range_start = os.getenv("SOCKET_BIND_RANGE_START", self.default_port_range[0])
+        self.port_range_end = os.getenv("SOCKET_BIND_RANGE_END", self.default_port_range[1])
 
     def recv_all(self, sock):
         data = ''
@@ -133,7 +146,7 @@ class SampleChecker(Server):
     def push(self, endpoint, flag_id, flag):
         try:
             result = self.__push(endpoint, flag_id, flag)
-        except socket.error:
+        except socket.error, socket.timeout:
             self.logger.exception("SOCKET EXCEPTION: SERVICE IS DOWN")
             return Result.DOWN, flag_id
         except ValueError:
@@ -150,7 +163,7 @@ class SampleChecker(Server):
     def __push(self, endpoint, flag_id, flag):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         #to prevent checker blocking on recv or send
-        s.settimeout(3)
+        s.settimeout(self.timeout)
         s.connect((endpoint, self.PORT))
         greeting = self.recv_all(s)
         if not self.check_reply(greeting, reply=self.REPL_220):
@@ -227,7 +240,7 @@ class SampleChecker(Server):
 
         #creating data connection
         addr = s.getsockname()[0]
-        port = random.randint(self.port_range[0], self.port_range[1])
+        port = random.randint(self.port_range_start, self.port_range_end)
         arg = ",".join(addr.split(".")) + "," + str(port / 0x100) + "," + str(port % 0x100)
         self.send_all(s, "PORT " + arg)
         reply = self.recv_all(s)
@@ -281,7 +294,7 @@ class SampleChecker(Server):
     def pull(self, endpoint, flag_id, flag):
         try:
             result = self.__pull(endpoint, flag_id, flag)
-        except socket.error:
+        except socket.error, socket.timeout:
             self.logger.exception("SOCKET EXCEPTION: SERVICE IS DOWN")
             return Result.DOWN
         except:
@@ -303,7 +316,7 @@ class SampleChecker(Server):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         #to prevent checker blocking on recv or send
-        s.settimeout(5.0)
+        s.settimeout(self.timeout)
         s.connect((endpoint, self.PORT))
 
         greeting = self.recv_all(s)
@@ -339,7 +352,7 @@ class SampleChecker(Server):
 
         #creating data connection
         addr = s.getsockname()[0]
-        port = random.randint(self.port_range[0], self.port_range[1])
+        port = random.randint(self.port_range_start, self.port_range_end)
         arg = ",".join(addr.split(".")) + "," + str(port / 0x100) + "," + str(port % 0x100)
         self.send_all(s, "PORT " + arg)
         reply = self.recv_all(s)
@@ -381,5 +394,5 @@ checker = SampleChecker()
 """for x in xrange(1):
     result, flag_id = checker.push("10.1.10.132", "flag_id", "flag")
     print "Push return is", result, " data: ", flag_id + "\n"
-    print "Pulling return is: ", checker.pull("10.1.10.132", "f", "flsag")"""
+    print "Pulling return is: ", checker.pull("10.1.10.132", flag_id, "flag")"""
 checker.run()
