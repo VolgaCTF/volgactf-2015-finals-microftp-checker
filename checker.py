@@ -97,8 +97,8 @@ class SampleChecker(Server):
 
 
     PORT = 21
-    default_port_range = [5000, 6000]
-    default_timeout = 5
+    default_port_range = ["5000", "6000"]
+    default_timeout = "5"
     REPL_220 = "220 Service ready for new user.\r\n"
     REPL_331_ANON = "331 Anonymous login okay, send your complete email as your password.\r\n"
     REPL_230 = "230 User logged in, proceed.\r\n"
@@ -111,8 +111,8 @@ class SampleChecker(Server):
     def __init__(self):
         Server.__init__(self)
         self.timeout = os.getenv("SOCKET_TIMEOUT", self.default_timeout)
-        self.port_range_start = os.getenv("SOCKET_BIND_RANGE_START", self.default_port_range[0])
-        self.port_range_end = os.getenv("SOCKET_BIND_RANGE_END", self.default_port_range[1])
+        self.port_range_start = int(os.getenv("SOCKET_BIND_RANGE_START", self.default_port_range[0]))
+        self.port_range_end = int(os.getenv("SOCKET_BIND_RANGE_END", self.default_port_range[1]))
 
     def recv_all(self, sock):
         data = ''
