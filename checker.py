@@ -110,7 +110,7 @@ class SampleChecker(Server):
 
     def __init__(self):
         Server.__init__(self)
-        self.timeout = os.getenv("SOCKET_TIMEOUT", self.default_timeout)
+        self.timeout = int(os.getenv("SOCKET_TIMEOUT", self.default_timeout))
         self.port_range_start = int(os.getenv("SOCKET_BIND_RANGE_START", self.default_port_range[0]))
         self.port_range_end = int(os.getenv("SOCKET_BIND_RANGE_END", self.default_port_range[1]))
 
@@ -146,7 +146,7 @@ class SampleChecker(Server):
     def push(self, endpoint, flag_id, flag):
         try:
             result = self.__push(endpoint, flag_id, flag)
-        except socket.error, socket.timeout:
+        except (socket.error, socket.timeout):
             self.logger.exception("SOCKET EXCEPTION: SERVICE IS DOWN")
             return Result.DOWN, flag_id
         except ValueError:
@@ -294,7 +294,7 @@ class SampleChecker(Server):
     def pull(self, endpoint, flag_id, flag):
         try:
             result = self.__pull(endpoint, flag_id, flag)
-        except socket.error, socket.timeout:
+        except (socket.error, socket.timeout):
             self.logger.exception("SOCKET EXCEPTION: SERVICE IS DOWN")
             return Result.DOWN
         except:
@@ -391,8 +391,8 @@ class SampleChecker(Server):
 
 
 checker = SampleChecker()
-"""for x in xrange(1):
-    result, flag_id = checker.push("10.1.10.132", "flag_id", "flag")
+for x in xrange(1):
+    result, flag_id = checker.push("10.1.10.132", "flag_id", "flag_maza_fucka!")
     print "Push return is", result, " data: ", flag_id + "\n"
-    print "Pulling return is: ", checker.pull("10.1.10.132", flag_id, "flag")"""
-checker.run()
+    print "Pulling return is: ", checker.pull("10.1.10.132", flag_id, "flag_maza_fucka!")
+#checker.run()
