@@ -391,8 +391,10 @@ class SampleChecker(Server):
 
 
 checker = SampleChecker()
-for x in xrange(1):
-    result, flag_id = checker.push("10.1.10.132", "flag_id", "flag_maza_fucka!")
-    print "Push return is", result, " data: ", flag_id + "\n"
-    print "Pulling return is: ", checker.pull("10.1.10.132", flag_id, "flag_maza_fucka!")
-#checker.run()
+#for x in xrange(1):
+#    result, flag_id = checker.push("10.1.10.132", "flag_id", "flag_maza_fucka!")
+#    print "Push return is", result, " data: ", flag_id + "\n"
+#    print "Pulling return is: ", checker.pull("10.1.10.132", flag_id, "flag_maza_fucka!")
+
+checker.run()
+
